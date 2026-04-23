@@ -44,7 +44,3 @@ echo "hello" | ./ft_ssl md5
 ## Project Structure
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed structure and module descriptions.
-
-## Author
-
-tyrant
