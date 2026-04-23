@@ -5,7 +5,7 @@ A lightweight, modular implementation of common cryptographic hash functions in 
 ## Features
 
 - **MD5** - Message Digest Algorithm 5
-- **SHA1** - Secure Hash Algorithm 1
+- **whirlpool** - Secure Hash Algorithm 1
 - **SHA256** - Secure Hash Algorithm 256-bit
 
 ## Supported Flags
@@ -38,7 +38,7 @@ echo "hello" | ./ft_ssl md5
 
 # With flags
 ./ft_ssl md5 -p -s "hello"
-./ft_ssl sha1 -r myfile.txt
+./ft_ssl whirlpool -r myfile.txt
 ```
 
 ## Project Structure

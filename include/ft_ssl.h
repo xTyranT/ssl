@@ -10,7 +10,7 @@
 #include "core/dispatcher.h"
 #include "core/parser.h"
 #include "hash/md5.h"
-#include "hash/sha1.h"
+#include "hash/whirlpool.h"
 #include "hash/sha256.h"
 #include "io/input.h"
 #include "io/output.h"

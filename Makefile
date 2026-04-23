@@ -1,29 +1,36 @@
 CC = gcc
 
-CFLAGS = -fsanitize=address -g3 -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra -Werror
+
+DEBUG = -g3 -fsanitize=address
 
 INCLUDES = -Iinclude
 
 NAME = ft_ssl
 
-SRCS = $(wildcard src/*.c) $(wildcard src/*/*.c) src/utils/utils.c
+SRC_DIR = src
 
-OBJS = $(SRCS:.c=.o)
+OBJ_DIR = obj
 
-.PHONY: all clean fclean re
+SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
+
+OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+
+.PHONY: all clean fclean re debug
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
 	@printf "✓ Linking %s\n" $(NAME)
-	@$(CC) $(CFLAGS) -o $@ $^
+	@$(CC) $(CFLAGS) $(INCLUDES) -o $@ $^
 
-%.o: %.c
-	@printf "⠋ Compiling...\r"
-	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $< > /dev/null 2>&1
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	@printf "Compiling %s\n" $<
+	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 clean:
-	@rm -f $(OBJS)
+	@rm -rf $(OBJ_DIR)
 	@echo "✓ Cleaned"
 
 fclean: clean
@@ -31,3 +38,6 @@ fclean: clean
 	@echo "✓ Full cleaned"
 
 re: fclean all
+
+debug: fclean
+	@$(CC) $(CFLAGS) $(DEBUG) $(INCLUDES) $(SRCS) -o $(NAME)

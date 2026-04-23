@@ -3,6 +3,11 @@
 
 #include <stdio.h>
 
+typedef struct s_args {
+    char*   command;
+    char**  argv;
+    int     argc;
+} t_args;
 
 typedef enum {
     INPUT_STDIN,
@@ -10,13 +15,6 @@ typedef enum {
     INPUT_STRING
 } t_input_type;
 
-typedef struct {
-    char*        command;
-    int          flag;
-    char*        input;
-    t_input_type input_type;
-} t_args;
-
-t_args  parse_args(int argc, char** argv);
+int  parse_args(int argc, char** argv, t_args* arguments);
 
 #endif

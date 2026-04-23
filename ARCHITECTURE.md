@@ -15,7 +15,7 @@ ssl/
 │   │   └── parser.h        # Argument parsing
 │   ├── hash/               # Hash algorithms
 │   │   ├── md5.h
-│   │   ├── sha1.h
+│   │   ├── whirlpool.h
 │   │   └── sha256.h
 │   └── io/                 # Input/Output
 │       ├── input.h         # Reading files and stdin
@@ -28,7 +28,7 @@ ssl/
 │   │   └── parser.c        # Parse CLI arguments
 │   ├── hash/
 │   │   ├── md5.c           # MD5 implementation
-│   │   ├── sha1.c          # SHA1 implementation
+│   │   ├── whirlpool.c          # whirlpool implementation
 │   │   └── sha256.c        # SHA256 implementation
 │   └── io/
 │       ├── input.c         # File/stdin reading
@@ -84,7 +84,7 @@ ssl/
 - `print_usage()` - Show usage message
 - `print_error()` - Show error with available commands
 
-### hash/md5.h, hash/sha1.h, hash/sha256.h
+### hash/md5.h, hash/whirlpool.h, hash/sha256.h
 **Purpose:** Implement individual hash algorithms
 
 - Each module contains the algorithm implementation
@@ -92,7 +92,7 @@ ssl/
 - Returns computed hash
 
 **Key Functions:**
-- `md5_handler()`, `sha1_handler()`, `sha256_handler()` - Hash handlers
+- `md5_handler()`, `whirlpool_handler()`, `sha256_handler()` - Hash handlers
 
 ## Data Flow
 
@@ -107,7 +107,7 @@ dispatcher.c (select handler)
    ↓
 input.c (read data)
    ↓
-hash/md5.c|sha1.c|sha256.c (compute hash)
+hash/md5.c|whirlpool.c|sha256.c (compute hash)
    ↓
 output.c (format & display result)
 ```
