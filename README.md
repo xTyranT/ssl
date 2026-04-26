@@ -1,19 +1,19 @@
 # ft_ssl
 
-A lightweight, modular implementation of common cryptographic hash functions in C.
+A lightweight, modular C implementation of common cryptographic hash functions.
 
 ## Features
 
-- **MD5** - Message Digest Algorithm 5
-- **whirlpool** - Secure Hash Algorithm 1
-- **SHA256** - Secure Hash Algorithm 256-bit
+- **MD5** — Message Digest Algorithm 5
+- **SHA-256** — Secure Hash Algorithm, 256-bit
+- **Whirlpool** — 512-bit cryptographic hash function
 
 ## Supported Flags
 
-- `-p` - Echo input and hash output
-- `-q` - Quiet mode
-- `-r` - Reverse output format
-- `-s` - Process string argument instead of file
+- `-p` — Read from standard input, echo input, then print the hash
+- `-q` — Quiet mode; print only the hash
+- `-r` — Reverse output format
+- `-s` — Hash the provided string argument instead of a file
 
 ## Building
 
