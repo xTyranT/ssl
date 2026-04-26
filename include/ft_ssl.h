@@ -15,6 +15,6 @@
 #include "io/input.h"
 #include "io/output.h"
 
-#define BUFFER_SIZE 4096
+void    print_usage(void);
 
 #endif

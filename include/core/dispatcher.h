@@ -3,6 +3,8 @@
 
 #include "parser.h"
 
+#include <stdio.h>
+
 typedef struct {
     const char* name;
     int         (*fn)(t_args *args);

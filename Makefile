@@ -16,7 +16,7 @@ SRCS = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
 
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-.PHONY: all clean fclean re debug
+.PHONY: all clean fclean re debug test
 
 all: $(NAME)
 
@@ -41,3 +41,9 @@ re: fclean all
 
 debug: fclean
 	@$(CC) $(CFLAGS) $(DEBUG) $(INCLUDES) $(SRCS) -o $(NAME)
+
+test: fclean $(NAME)
+	@echo "Running parser tests..."
+	@chmod +x tester.sh
+	@./tester.sh || (echo "Tests failed ❌" && exit 1)
+	@echo "All tests passed ✅"
