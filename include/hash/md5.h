@@ -2,27 +2,6 @@
 #define MD5_H
 
 #include "core/dispatcher.h"
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-
-typedef struct s_flags {
-    bool p;
-    bool q;
-    bool r;
-} t_flags;
-
-typedef enum e_input_type {
-    INPUT_STDIN,
-    INPUT_STR,
-    INPUT_FILE
-} t_input_type;
-
-typedef struct s_hash_input {
-    t_input_type type;
-    char* value;
-} t_hash_input;
 
 typedef struct s_md5_cmd {
     t_flags flags;

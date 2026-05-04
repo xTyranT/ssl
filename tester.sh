@@ -1,128 +1,231 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-BIN="./ft_ssl"
-FAILS=0
-TOTAL=0
+EXE="./ft_ssl"
+PASS=0
+FAIL=0
+LEAK_FAIL=0
 
-OUT="/tmp/ft_ssl_test_out"
-ERR="/tmp/ft_ssl_test_err"
+GREEN="\033[32m"
+RED="\033[31m"
+YELLOW="\033[33m"
+RESET="\033[0m"
+
+TMP_FILE="/tmp/ft_ssl_test_file"
+TMP_EMPTY="/tmp/ft_ssl_empty_file"
+TMP_OUT="/tmp/ft_ssl_out"
+TMP_ERR="/tmp/ft_ssl_err"
 
 run_test() {
-    NAME="$1"
-    EXPECT="$2"
-    shift 2
+    name="$1"
+    expected="$2"
+    actual="$3"
 
-    TOTAL=$((TOTAL + 1))
-
-    "$BIN" "$@" >"$OUT" 2>"$ERR"
-    STATUS=$?
-
-    if [ "$EXPECT" = "OK" ] && [ "$STATUS" -eq 0 ]; then
-        echo "[OK]   $NAME"
-    elif [ "$EXPECT" = "ERR" ] && [ "$STATUS" -ne 0 ]; then
-        echo "[OK]   $NAME"
+    if [ "$expected" = "$actual" ]; then
+        echo -e "${GREEN}[PASS]${RESET} $name"
+        PASS=$((PASS + 1))
     else
-        echo "[FAIL] $NAME"
-        echo "       command: $BIN $*"
-        echo "       expected: $EXPECT"
-        echo "       status: $STATUS"
-        echo "       stdout:"
-        cat "$OUT"
-        echo "       stderr:"
-        cat "$ERR"
-        FAILS=$((FAILS + 1))
+        echo -e "${RED}[FAIL]${RESET} $name"
+        echo "Expected: [$expected]"
+        echo "Actual:   [$actual]"
+        FAIL=$((FAIL + 1))
     fi
 }
 
-make >/dev/null || exit 1
+run_error_test() {
+    name="$1"
+    shift
 
-echo "hello" > /tmp/ft_ssl_file1
-echo "world" > /tmp/ft_ssl_file2
-echo "test"  > /tmp/ft_ssl_file3
+    "$EXE" "$@" > "$TMP_OUT" 2> "$TMP_ERR"
+    status=$?
 
-# Files with flag-looking names in current directory
-touch -- -p -q -r
+    if [ "$status" -ne 0 ]; then
+        echo -e "${GREEN}[PASS]${RESET} $name"
+        PASS=$((PASS + 1))
+    else
+        echo -e "${RED}[FAIL]${RESET} $name"
+        echo "Expected non-zero exit status"
+        FAIL=$((FAIL + 1))
+    fi
+}
 
-# Basic valid
-run_test "md5 no args stdin" OK md5
-run_test "md5 -p" OK md5 -p
-run_test "md5 -q" OK md5 -q
-run_test "md5 -r" OK md5 -r
-run_test "md5 all flags" OK md5 -p -q -r
+hash_expected() {
+    algo="$1"
+    input="$2"
 
-# Invalid flags before files
-run_test "invalid -x before file" ERR md5 -x
-run_test "invalid combined -pq before file" ERR md5 -pq
-run_test "invalid dash only before file" ERR md5 -
-run_test "invalid double dash --p before file" ERR md5 --p
-run_test "invalid long --help before file" ERR md5 --help
+    if [ "$algo" = "md5" ]; then
+        printf "%s" "$input" | openssl md5 | awk '{print $2}'
+    elif [ "$algo" = "sha256" ]; then
+        printf "%s" "$input" | openssl sha256 | awk '{print $2}'
+    elif [ "$algo" = "whirlpool" ]; then
+        if [ "$input" = "test" ]; then
+            echo "b913d5bbb8e461c2c5961cbe0edcdadfd29f068225ceb37da6defcf89849368f8c6c2eb6a4c4ac75775d032a0ecfdfe8550573062b653fe92fc7b8fb3b7be8d6"
+        elif [ "$input" = "" ]; then
+            echo "19fa61d75522a4669b44e39c1d2e1726c530232130d407f89afee0964997f7a73e83be698b288febcf88e3e03c4f0757ea8964e59b63d93708b138cc42a66eb3"
+        fi
+    fi
+}
 
-# -s behavior
-run_test "-s simple" OK md5 -s hello
-run_test "-s empty string" OK md5 -s ""
-run_test "-s spaces" OK md5 -s "hello world"
-run_test "-s flag-looking string" OK md5 -s -p
-run_test "-s invalid-looking string" OK md5 -s -x
-run_test "-s missing value" ERR md5 -s
-run_test "multiple -s" OK md5 -s one -s two -s three
+display_name() {
+    algo="$1"
 
-# Files
-run_test "single file" OK md5 /tmp/ft_ssl_file1
-run_test "multiple files" OK md5 /tmp/ft_ssl_file1 /tmp/ft_ssl_file2 /tmp/ft_ssl_file3
-run_test "missing file" ERR md5 /tmp/does_not_exist_123
+    if [ "$algo" = "md5" ]; then
+        echo "MD5"
+    else
+        echo "$algo"
+    fi
+}
 
-# Once file parsing starts, flag-looking args are files
-run_test "file then -p treated as file" OK md5 /tmp/ft_ssl_file1 -p
-run_test "file then -q treated as file" OK md5 /tmp/ft_ssl_file1 -q
-run_test "file then -r treated as file" OK md5 /tmp/ft_ssl_file1 -r
+check_algo_output() {
+    algo="$1"
+    input="test"
+    hash=$(hash_expected "$algo" "$input")
+    display=$(display_name "$algo")
 
-run_test "file then missing -x treated as file" ERR md5 /tmp/ft_ssl_file1 -x
-run_test "file then missing -qr treated as file" ERR md5 /tmp/ft_ssl_file1 -qr
+    echo -e "\n${YELLOW}Output tests: $algo${RESET}"
 
-# -s before file still consumes string
-run_test "-s then file" OK md5 -s hello /tmp/ft_ssl_file1
-run_test "-p -s then file" OK md5 -p -s hello /tmp/ft_ssl_file1
-run_test "multiple strings and files" OK md5 -s one /tmp/ft_ssl_file1 -s two /tmp/ft_ssl_file2
+    echo -n "$input" > "$TMP_FILE"
 
-# OpenSSL-style: after first file, -s is also a file, not a string flag
-run_test "file then -s treated as file if file exists" ERR md5 /tmp/ft_ssl_file1 -s hello
+    run_test "$algo -s default" \
+        "$display (\"$input\") = $hash" \
+        "$($EXE "$algo" -s "$input")"
 
-# Command errors
-run_test "unknown command" ERR unknown
-run_test "sha typo" ERR sh256
+    run_test "$algo -s quiet" \
+        "$hash" \
+        "$($EXE "$algo" -q -s "$input")"
 
-# SHA256 / Whirlpool basic command routing
-run_test "sha256 no args" OK sha256
-run_test "sha256 -s" OK sha256 -s hello
-run_test "sha256 invalid flag" ERR sha256 -x
+    run_test "$algo -s reverse" \
+        "$hash $input" \
+        "$($EXE "$algo" -r -s "$input")"
 
-run_test "whirlpool no args" OK whirlpool
-run_test "whirlpool -s" OK whirlpool -s hello
-run_test "whirlpool invalid flag" ERR whirlpool -x
+    run_test "$algo stdin" \
+        "$display (stdin) = $hash" \
+        "$(printf "%s" "$input" | $EXE "$algo")"
 
-# Stress-ish parser tests
-run_test "many strings" OK md5 \
-    -s a -s b -s c -s d -s e -s f -s g -s h -s i -s j
+    run_test "$algo -p stdin" \
+        "$input$display (stdin) = $hash" \
+        "$(printf "%s" "$input" | $EXE "$algo" -p | tr -d '\n')"
 
-run_test "many files" OK md5 \
-    /tmp/ft_ssl_file1 /tmp/ft_ssl_file2 /tmp/ft_ssl_file3 \
-    /tmp/ft_ssl_file1 /tmp/ft_ssl_file2 /tmp/ft_ssl_file3
+    run_test "$algo file default" \
+        "$display ($TMP_FILE) = $hash" \
+        "$($EXE "$algo" "$TMP_FILE")"
 
-run_test "many mixed before file phase" OK md5 \
-    -p -q -r -s a -s b -s c /tmp/ft_ssl_file1 /tmp/ft_ssl_file2
+    run_test "$algo file quiet" \
+        "$hash" \
+        "$($EXE "$algo" -q "$TMP_FILE")"
 
-rm -f "$OUT" "$ERR"
-rm -f /tmp/ft_ssl_file1 /tmp/ft_ssl_file2 /tmp/ft_ssl_file3
-rm -f -- -p -q -r
+    run_test "$algo file reverse" \
+        "$hash $TMP_FILE" \
+        "$($EXE "$algo" -r "$TMP_FILE")"
 
-echo
-echo "Total: $TOTAL"
-echo "Failures: $FAILS"
+    # Empty string/file tests
+    empty_hash=$(hash_expected "$algo" "")
+    echo -n "" > "$TMP_EMPTY"
 
-if [ "$FAILS" -eq 0 ]; then
-    echo "All tests passed ✅"
-else
-    echo "Some tests failed ❌"
+    if [ -n "$empty_hash" ]; then
+        run_test "$algo empty -s" \
+            "$display (\"\") = $empty_hash" \
+            "$($EXE "$algo" -s "")"
+
+        run_test "$algo empty file" \
+            "$display ($TMP_EMPTY) = $empty_hash" \
+            "$($EXE "$algo" "$TMP_EMPTY")"
+    fi
+}
+
+run_leak_test() {
+    name="$1"
+    stdin_data="$2"
+    shift 2
+
+    if [ -n "$stdin_data" ]; then
+        printf "%s" "$stdin_data" | valgrind \
+            --leak-check=full \
+            --show-leak-kinds=all \
+            --errors-for-leak-kinds=definite,indirect,possible \
+            --error-exitcode=42 \
+            "$EXE" "$@" > "$TMP_OUT" 2> "$TMP_ERR"
+    else
+        valgrind \
+            --leak-check=full \
+            --show-leak-kinds=all \
+            --errors-for-leak-kinds=definite,indirect,possible \
+            --error-exitcode=42 \
+            "$EXE" "$@" > "$TMP_OUT" 2> "$TMP_ERR"
+    fi
+
+    status=$?
+
+    if [ "$status" -eq 42 ]; then
+        echo -e "${RED}[LEAK]${RESET} $name"
+        grep -E "definitely lost|indirectly lost|possibly lost|ERROR SUMMARY" "$TMP_ERR"
+        LEAK_FAIL=$((LEAK_FAIL + 1))
+    else
+        echo -e "${GREEN}[NO LEAK]${RESET} $name"
+    fi
+}
+
+check_algo_leaks() {
+    algo="$1"
+
+    echo -e "\n${YELLOW}Leak tests: $algo${RESET}"
+
+    echo -n "test" > "$TMP_FILE"
+
+    run_leak_test "$algo -s" "" "$algo" -s "test"
+    run_leak_test "$algo -q -s" "" "$algo" -q -s "test"
+    run_leak_test "$algo -r -s" "" "$algo" -r -s "test"
+    run_leak_test "$algo file" "" "$algo" "$TMP_FILE"
+    run_leak_test "$algo stdin" "test" "$algo"
+    run_leak_test "$algo -p stdin" "test" "$algo" -p
+}
+
+check_error_cases() {
+    echo -e "\n${YELLOW}Error tests${RESET}"
+
+    run_error_test "no command" 
+    run_error_test "unknown command" unknown
+    run_error_test "md5 unknown flag" md5 -x
+    run_error_test "sha256 unknown flag" sha256 -x
+    run_error_test "whirlpool unknown flag" whirlpool -x
+    run_error_test "md5 missing -s argument" md5 -s
+    run_error_test "sha256 missing -s argument" sha256 -s
+    run_error_test "whirlpool missing -s argument" whirlpool -s
+    run_error_test "file does not exist" md5 /tmp/ft_ssl_does_not_exist_123
+}
+
+cleanup() {
+    rm -f "$TMP_FILE" "$TMP_EMPTY" "$TMP_OUT" "$TMP_ERR"
+}
+
+if [ ! -x "$EXE" ]; then
+    echo -e "${RED}Error:${RESET} $EXE not found or not executable"
+    exit 1
 fi
 
-exit "$FAILS"
+check_algo_output md5
+check_algo_output sha256
+check_algo_output whirlpool
+check_error_cases
+
+if command -v valgrind >/dev/null 2>&1; then
+    check_algo_leaks md5
+    check_algo_leaks sha256
+    check_algo_leaks whirlpool
+else
+    echo -e "\n${YELLOW}Skipping leak tests:${RESET} valgrind not installed"
+fi
+
+cleanup
+
+echo
+echo "Output/Error tests passed: $PASS"
+echo "Output/Error tests failed: $FAIL"
+echo "Leak tests failed: $LEAK_FAIL"
+
+if [ "$FAIL" -eq 0 ] && [ "$LEAK_FAIL" -eq 0 ]; then
+    echo -e "${GREEN}All tests passed.${RESET}"
+    exit 0
+else
+    echo -e "${RED}Some tests failed.${RESET}"
+    exit 1
+fi
