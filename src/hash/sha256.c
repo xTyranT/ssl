@@ -11,7 +11,7 @@ static void initialize_sha256(t_sha256_cmd* sha256)
     sha256->input = NULL;
 }
 
-static int validate_sha256_flags(char* flag, t_flags* flags)
+static int validate_sha256_flags(char* flag, t_hash_flags* flags)
 {
     if (!ft_strcmp("p", flag))
         return flags->p = true, 0;

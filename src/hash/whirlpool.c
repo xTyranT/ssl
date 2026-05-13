@@ -11,7 +11,7 @@ static void initialize_whirlpool(t_whirlpool_cmd* whirlpool)
     whirlpool->input = NULL;
 }
 
-static int validate_whirlpool_flags(char* flag, t_flags* flags)
+static int validate_whirlpool_flags(char* flag, t_hash_flags* flags)
 {
     if (!ft_strcmp("p", flag))
         return flags->p = true, 0;

@@ -11,7 +11,7 @@ static void initialize_md5(t_md5_cmd* md5)
     md5->input = NULL;
 }
 
-static int validate_md5_flags(char* flag, t_flags* flags)
+static int validate_md5_flags(char* flag, t_hash_flags* flags)
 {
     if (!ft_strcmp("p", flag))
         return flags->p = true, 0;

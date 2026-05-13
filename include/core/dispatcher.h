@@ -14,11 +14,11 @@ typedef struct {
     int         (*fn)(t_args *args);
 } t_command;
 
-typedef struct s_flags {
+typedef struct s_hash_flags {
     bool p;
     bool q;
     bool r;
-} t_flags;
+} t_hash_flags;
 
 typedef enum e_input_type {
     INPUT_STDIN,
