@@ -1,6 +1,7 @@
 #include "hash/whirlpool.h"
 #include "utils/utils.h"
 #include "io/input.h"
+#include "io/output.h"
 
 static void initialize_whirlpool(t_whirlpool_cmd* whirlpool)
 {

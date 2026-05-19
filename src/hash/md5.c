@@ -1,5 +1,6 @@
 #include "hash/md5.h"
 #include "utils/utils.h"
+#include "io/output.h"
 #include "io/input.h"
 
 static void initialize_md5(t_md5_cmd* md5)

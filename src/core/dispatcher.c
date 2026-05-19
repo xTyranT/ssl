@@ -4,6 +4,7 @@
 #include "hash/sha256.h"
 #include "hash/whirlpool.h"
 #include "cipher/base64.h"
+#include "io/output.h"
 
 static const t_command g_commands[] = {
     {"md5", &cmd_md5},

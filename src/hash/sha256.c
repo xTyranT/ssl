@@ -1,5 +1,6 @@
 #include "hash/sha256.h"
 #include "utils/utils.h"
+#include "io/output.h"
 #include "io/input.h"
 
 static void initialize_sha256(t_sha256_cmd* sha256)
