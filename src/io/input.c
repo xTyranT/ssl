@@ -10,7 +10,7 @@ char* read_fd(size_t* len, int fd)
     while ((n = read(fd, tmp, BUFFER_SIZE)))
     {
         if (n < 0)
-            return free(buffer), perror("ft_ssl: md5"), NULL;
+            return free(buffer), perror("ft_ssl: read"), NULL;
         if (n == 0)
             break;
         if (total + n > capacity) {

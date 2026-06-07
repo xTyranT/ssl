@@ -2,7 +2,6 @@
 #include "utils/utils.h"
 #include "io/input.h"
 #include "io/output.h"
-#include <math.h>
 
 static void initialize_base64(t_base64_cmd* base64)
 {

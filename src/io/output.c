@@ -25,6 +25,24 @@ void base64_error_extra_args(char *arg)
     fprintf(stderr, "usage: ft_ssl base64 [-e|-d] [-i inputfile] [-o outputfile]\n");
 }
 
+void des_error_flag(char* flag)
+{
+	fprintf(stderr, "ft_ssl: des: unknown option: -%s\n", flag);
+	fprintf(stderr, "usage: ft_ssl des-ecb [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-p password] [-s salt] [-v iv] [-a]\n");
+}
+
+void des_error_missing_arg(void)
+{
+	fprintf(stderr, "ft_ssl: des: option [-o|-i|-k|-p|-s|-v] requires an argument\n");
+	fprintf(stderr, "usage: ft_ssl des-ecb [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-p password] [-s salt] [-v iv] [-a]\n");
+}
+
+void des_error_extra_args(char *arg)
+{
+	fprintf(stderr, "ft_ssl: des: extra argument given: %s\n", arg);
+	fprintf(stderr, "usage: ft_ssl des-ecb [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-a]\n");
+}
+
 void	print_usage(void)
 {
 	write(STDERR_FILENO,

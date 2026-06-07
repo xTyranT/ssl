@@ -4,6 +4,7 @@
 #include "hash/sha256.h"
 #include "hash/whirlpool.h"
 #include "cipher/base64.h"
+#include "cipher/des.h"
 #include "io/output.h"
 
 static const t_command g_commands[] = {
@@ -11,6 +12,7 @@ static const t_command g_commands[] = {
     {"sha256", &cmd_sha256},
     {"whirlpool", &cmd_whirlpool},
     {"base64", &cmd_base64},
+    {"des-ecb", &cmd_des},
     {NULL, NULL}
 };
 
