@@ -38,7 +38,7 @@ run_error_test() {
 	name="$1"
 	shift
 
-	"$EXE" "$@" > "$TMP_OUT" 2> "$TMP_ERR"
+	"$EXE" "$@" < /dev/null > "$TMP_OUT" 2> "$TMP_ERR"
 	status=$?
 
 	if [ "$status" -ne 0 ]; then
@@ -222,6 +222,103 @@ check_base64_output() {
 		"$($EXE base64 -d -i "$TMP_B64_IN")"
 }
 
+check_des_output() {
+	echo -e "\n${YELLOW}DES output tests${RESET}"
+
+	local key="0123456789ABCDEF"
+	local plaintext="abcdefgh"
+	local expected_hex="8fb1f64bbb168810086f9a1d74c94d4e"
+	local expected_b64="j7H2S7sWiBAIb5oddMlNTg=="
+	local iv="0000000000000000"
+	local expected_cbc_hex="8fb1f64bbb1688105e93bd431acc99cb"
+	local expected_cbc_b64="j7H2S7sWiBBek71DGsyZyw=="
+
+	run_test "des-ecb encrypt stdin" \
+		"$expected_hex" \
+		"$(printf '%s' "$plaintext" | $EXE des-ecb -e -k "$key" | xxd -p)"
+
+	run_test "des-ecb decrypt stdin" \
+		"$plaintext" \
+		"$(printf '%s' "$expected_hex" | xxd -r -p | $EXE des-ecb -d -k "$key" | tr -d '\n')"
+
+	echo -n "$plaintext" > "$TMP_FILE"
+
+	run_test "des-ecb encrypt file" \
+		"$expected_hex" \
+		"$($EXE des-ecb -e -i "$TMP_FILE" -k "$key" | xxd -p)"
+
+	$EXE des-ecb -e -i "$TMP_FILE" -o "$TMP_OUT" -k "$key"
+	run_test "des-ecb encrypt file output" \
+		"$expected_hex" \
+		"$(xxd -p "$TMP_OUT")"
+
+	run_test "des-ecb encrypt -p string" \
+		"$expected_hex" \
+		"$($EXE des-ecb -e -k "$key" -p "$plaintext" | xxd -p)"
+
+	run_test "des-ecb encrypt -p string base64" \
+		"$expected_b64" \
+		"$($EXE des-ecb -e -a -k "$key" -p "$plaintext")"
+
+	run_test "des-cbc encrypt stdin" \
+		"$expected_cbc_hex" \
+		"$(printf '%s' "$plaintext" | $EXE des-cbc -e -k "$key" -v "$iv" | xxd -p)"
+
+	run_test "des-cbc decrypt stdin" \
+		"$plaintext" \
+		"$(printf '%s' "$expected_cbc_hex" | xxd -r -p | $EXE des-cbc -d -k "$key" -v "$iv" | tr -d '\n')"
+
+	run_test "des-cbc encrypt base64 stdin" \
+		"$expected_cbc_b64" \
+		"$(printf '%s' "$plaintext" | $EXE des-cbc -e -a -k "$key" -v "$iv")"
+
+	run_test "des-cbc decrypt base64 stdin" \
+		"$plaintext" \
+		"$(printf '%s' "$expected_cbc_b64" | $EXE des-cbc -d -a -k "$key" -v "$iv" | tr -d '\n')"
+
+	run_test "des-ecb encrypt -p stdin" \
+		"$(printf '%s' "$plaintext" | xxd -p -c100)${expected_hex}" \
+		"$(printf '%s' "$plaintext" | $EXE des-ecb -e -k "$key" -p | xxd -p -c100)"
+
+	printf '%s' "$expected_hex" | xxd -r -p > "$TMP_FILE"
+	run_test "des-ecb decrypt file" \
+		"$plaintext" \
+		"$($EXE des-ecb -d -i "$TMP_FILE" -k "$key" | tr -d '\n')"
+
+	run_test "des-ecb encrypt base64 stdin" \
+		"$expected_b64" \
+		"$(printf '%s' "$plaintext" | $EXE des-ecb -e -a -k "$key")"
+
+	run_test "des-ecb decrypt base64 stdin" \
+		"$plaintext" \
+		"$(printf '%s' "$expected_b64" | $EXE des-ecb -d -a -k "$key" | tr -d '\n')"
+}
+
+check_des_error_cases() {
+	echo -e "\n${YELLOW}DES error tests${RESET}"
+
+	local key="0123456789ABCDEF"
+	run_error_test "des-ecb invalid key length" des-ecb -e -k 123
+	run_error_test "des-ecb invalid key hex" des-ecb -e -k 0123456789ABCDEFZ
+	run_error_test "des-cbc invalid iv length" des-cbc -e -k "$key" -v 123
+	run_error_test "des-cbc invalid iv hex" des-cbc -e -k "$key" -v 000000000000000Z
+}
+
+check_des_leaks() {
+	echo -e "\n${YELLOW}Leak tests: des-ecb${RESET}"
+
+	local key="0123456789ABCDEF"
+	local expected_hex="8fb1f64bbb168810086f9a1d74c94d4e0000"
+
+	echo -n "abcdefgh" > "$TMP_FILE"
+
+	run_leak_test "des-ecb encrypt stdin" "abcdefgh" des-ecb -e -k "$key"
+	run_leak_test "des-ecb encrypt file" "" des-ecb -e -k "$key" -i "$TMP_FILE"
+
+	printf '%s' "$expected_hex" | xxd -r -p > "$TMP_FILE"
+	run_leak_test "des-ecb decrypt file" "" des-ecb -d -k "$key" -i "$TMP_FILE"
+}
+
 run_leak_test() {
 	name="$1"
 	stdin_data="$2"
@@ -324,6 +421,8 @@ check_algo_output md5
 check_algo_output sha256
 check_algo_output whirlpool
 check_base64_output
+check_des_output
+check_des_error_cases
 check_error_cases
 
 if command -v valgrind >/dev/null 2>&1; then
@@ -331,6 +430,7 @@ if command -v valgrind >/dev/null 2>&1; then
 	check_algo_leaks sha256
 	check_algo_leaks whirlpool
 	check_base64_leaks
+	check_des_leaks
 else
 	echo -e "\n${YELLOW}Skipping leak tests:${RESET} valgrind not installed"
 fi

@@ -116,7 +116,7 @@ static int process_base64_stdin(t_base64_cmd* base64)
     if (!base64->out_file)
         status = write_to_fd(STDOUT_FILENO, ft_strlen(result), result);
     else {
-        int ofd = open(base64->out_file, O_RDWR);
+        int ofd = open(base64->out_file, O_RDWR | O_CREAT | O_TRUNC, 0777);
         status = write_to_fd(ofd, ft_strlen(result), result);
         close(ofd);
     }

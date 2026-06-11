@@ -19,9 +19,12 @@ typedef struct s_des_cmd {
     char* out_file;
     bool  base64;
     char* key;
+    bool  key_generated;
     char* password;
+    bool  p_flag;
     char* salt;
     char* vector;
+    bool  cbc;
     t_des_input_type input_type;
 } t_des_cmd;
 

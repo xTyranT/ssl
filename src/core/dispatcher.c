@@ -13,6 +13,7 @@ static const t_command g_commands[] = {
     {"whirlpool", &cmd_whirlpool},
     {"base64", &cmd_base64},
     {"des-ecb", &cmd_des},
+    {"des-cbc", &cmd_des},
     {NULL, NULL}
 };
 

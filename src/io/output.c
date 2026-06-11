@@ -28,19 +28,19 @@ void base64_error_extra_args(char *arg)
 void des_error_flag(char* flag)
 {
 	fprintf(stderr, "ft_ssl: des: unknown option: -%s\n", flag);
-	fprintf(stderr, "usage: ft_ssl des-ecb [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-p password] [-s salt] [-v iv] [-a]\n");
+	fprintf(stderr, "usage: ft_ssl des-ecb|des-cbc [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-p password] [-s salt] [-v iv] [-a]\n");
 }
 
 void des_error_missing_arg(void)
 {
 	fprintf(stderr, "ft_ssl: des: option [-o|-i|-k|-p|-s|-v] requires an argument\n");
-	fprintf(stderr, "usage: ft_ssl des-ecb [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-p password] [-s salt] [-v iv] [-a]\n");
+	fprintf(stderr, "usage: ft_ssl des-ecb|des-cbc [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-p password] [-s salt] [-v iv] [-a]\n");
 }
 
 void des_error_extra_args(char *arg)
 {
 	fprintf(stderr, "ft_ssl: des: extra argument given: %s\n", arg);
-	fprintf(stderr, "usage: ft_ssl des-ecb [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-a]\n");
+	fprintf(stderr, "usage: ft_ssl des-ecb|des-cbc [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-a]\n");
 }
 
 void	print_usage(void)
@@ -53,6 +53,8 @@ void	print_usage(void)
 	write(STDERR_FILENO, "whirlpool\n", 10);
 	write(STDERR_FILENO, "\nCipher commands:\n", 18);
 	write(STDERR_FILENO, "base64\n", 7);
+	write(STDERR_FILENO, "des-ecb\n", 8);
+	write(STDERR_FILENO, "des-cbc\n", 8);
 	write(STDERR_FILENO, "\nDigest flags:\n", 15);
 	write(STDERR_FILENO, "-p  echo stdin before hashing\n", 30);
 	write(STDERR_FILENO, "-q  quiet mode\n", 15);
