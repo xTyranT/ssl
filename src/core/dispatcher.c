@@ -14,6 +14,9 @@ static const t_command g_commands[] = {
     {"base64", &cmd_base64},
     {"des-ecb", &cmd_des},
     {"des-cbc", &cmd_des},
+    {"des-cfb", &cmd_des},
+    {"des-ofb", &cmd_des},
+    {"des-ctr", &cmd_des},
     {NULL, NULL}
 };
 

@@ -28,19 +28,19 @@ void base64_error_extra_args(char *arg)
 void des_error_flag(char* flag)
 {
 	fprintf(stderr, "ft_ssl: des: unknown option: -%s\n", flag);
-	fprintf(stderr, "usage: ft_ssl des-ecb|des-cbc [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-p password] [-s salt] [-v iv] [-a]\n");
+	fprintf(stderr, "usage: ft_ssl des-ecb|des-cbc|des-cfb|des-ofb|des-ctr [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-p password] [-s salt] [-v iv] [-a]\n");
 }
 
 void des_error_missing_arg(void)
 {
 	fprintf(stderr, "ft_ssl: des: option [-o|-i|-k|-p|-s|-v] requires an argument\n");
-	fprintf(stderr, "usage: ft_ssl des-ecb|des-cbc [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-p password] [-s salt] [-v iv] [-a]\n");
+	fprintf(stderr, "usage: ft_ssl des-ecb|des-cbc|des-cfb|des-ofb|des-ctr [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-p password] [-s salt] [-v iv] [-a]\n");
 }
 
 void des_error_extra_args(char *arg)
 {
 	fprintf(stderr, "ft_ssl: des: extra argument given: %s\n", arg);
-	fprintf(stderr, "usage: ft_ssl des-ecb|des-cbc [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-a]\n");
+	fprintf(stderr, "usage: ft_ssl des-ecb|des-cbc|des-cfb|des-ofb|des-ctr [-e|-d] [-i inputfile] [-o outputfile] [-k key] [-a]\n");
 }
 
 void	print_usage(void)
@@ -55,6 +55,9 @@ void	print_usage(void)
 	write(STDERR_FILENO, "base64\n", 7);
 	write(STDERR_FILENO, "des-ecb\n", 8);
 	write(STDERR_FILENO, "des-cbc\n", 8);
+	write(STDERR_FILENO, "des-cfb\n", 8);
+	write(STDERR_FILENO, "des-ofb\n", 8);
+	write(STDERR_FILENO, "des-ctr\n", 8);
 	write(STDERR_FILENO, "\nDigest flags:\n", 15);
 	write(STDERR_FILENO, "-p  echo stdin before hashing\n", 30);
 	write(STDERR_FILENO, "-q  quiet mode\n", 15);
@@ -65,4 +68,13 @@ void	print_usage(void)
 	write(STDERR_FILENO, "-d  decode mode\n", 16);
 	write(STDERR_FILENO, "-i  input file\n", 15);
 	write(STDERR_FILENO, "-o  output file\n", 16);
+	write(STDERR_FILENO, "\nDES flags:\n", 12);
+	write(STDERR_FILENO, "-e  encrypt mode (default)\n", 27);
+	write(STDERR_FILENO, "-d  decrypt mode\n", 17);
+	write(STDERR_FILENO, "-k  key (16 hex chars, auto-generated if omitted)\n", 50);
+	write(STDERR_FILENO, "-v  initialization vector (16 hex chars, required for non-ECB)\n", 63);
+	write(STDERR_FILENO, "-i  input file\n", 15);
+	write(STDERR_FILENO, "-o  output file\n", 16);
+	write(STDERR_FILENO, "-p  password or read from stdin\n", 32);
+	write(STDERR_FILENO, "-a  base64 mode\n", 16);
 }

@@ -13,6 +13,14 @@ typedef enum e_des_input_type {
     DES_FILE
 } t_des_input_type;
 
+typedef enum e_des_cipher_mode {
+    DES_MODE_ECB,
+    DES_MODE_CBC,
+    DES_MODE_CFB,
+    DES_MODE_OFB,
+    DES_MODE_CTR
+} t_des_cipher_mode;
+
 typedef struct s_des_cmd {
     t_des_mode mode;
     char* in_file;
@@ -24,7 +32,7 @@ typedef struct s_des_cmd {
     bool  p_flag;
     char* salt;
     char* vector;
-    bool  cbc;
+    t_des_cipher_mode mode_type;
     t_des_input_type input_type;
 } t_des_cmd;
 

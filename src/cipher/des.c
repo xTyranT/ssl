@@ -19,7 +19,7 @@ static void initialize_des(t_des_cmd* des)
     des->password = NULL;
     des->salt = NULL;
     des->vector = NULL;
-    des->cbc = false;
+    des->mode_type = DES_MODE_ECB;
 }
 
 static int validate_des_flags(char* arg, t_des_cmd* des)
@@ -137,7 +137,11 @@ static int validate_des_args(t_des_cmd* des)
             return fprintf(stderr, "ft_ssl: des: initialization vector must be 16 hex characters (64 bits)\n"), 1;
         if (check_hex_string(des->vector))
             return 1;
-        des->cbc = true;
+        if (des->mode_type == DES_MODE_ECB)
+            return fprintf(stderr, "ft_ssl: des: initialization vector is not supported in ECB mode\n"), 1;
+    } else {
+        if (des->mode_type != DES_MODE_ECB)
+            return fprintf(stderr, "ft_ssl: des: initialization vector required for this mode\n"), 1;
     }
     if (check_hex_string(des->key))
         return 1;
@@ -466,41 +470,102 @@ static int process_des_buffer(char* buffer, size_t len, t_des_cmd* des)
             return perror("malloc:"), 1;
         memcpy(output, data, len);
         output_len = pkcs7_pad(output, len);
+
         uint64_t iv = 0;
-        if (des->cbc) {
+        uint64_t counter = 0;
+        if (des->mode_type != DES_MODE_ECB) {
             if (parse_hex_key(des->vector, &iv))
                 return fprintf(stderr, "ft_ssl: des: invalid initialization vector\n"), 1;
+            counter = iv;
         }
+
         for (size_t index = 0; index < output_len; index += DES_BLOCK_SIZE) {
             uint64_t block = bytes_to_u64(output + index);
-            if (des->cbc)
-                block ^= iv;
-            uint64_t encrypted = des_block(block, subkeys, false);
-            u64_to_bytes(encrypted, output + index);
-            if (des->cbc)
-                iv = encrypted;
+            uint64_t out_block = 0;
+            switch (des->mode_type) {
+                case DES_MODE_ECB: {
+                    uint64_t encrypted = des_block(block, subkeys, false);
+                    out_block = encrypted;
+                    break;
+                }
+                case DES_MODE_CBC: {
+                    uint64_t x = block ^ iv;
+                    uint64_t encrypted = des_block(x, subkeys, false);
+                    out_block = encrypted;
+                    iv = encrypted;
+                    break;
+                }
+                case DES_MODE_CFB: {
+                    uint64_t ks = des_block(iv, subkeys, false);
+                    out_block = block ^ ks;
+                    iv = out_block;
+                    break;
+                }
+                case DES_MODE_OFB: {
+                    uint64_t ks = des_block(iv, subkeys, false);
+                    out_block = block ^ ks;
+                    iv = ks;
+                    break;
+                }
+                case DES_MODE_CTR: {
+                    uint64_t ks = des_block(counter, subkeys, false);
+                    out_block = block ^ ks;
+                    counter++;
+                    break;
+                }
+            }
+            u64_to_bytes(out_block, output + index);
         }
-    }
-    else {
+    } else {
         if (len % DES_BLOCK_SIZE != 0)
             return fprintf(stderr, "ft_ssl: des: encrypted data must be multiple of 8 bytes\n"), 1;
         output = malloc(len);
         if (!output)
             return perror("malloc:"), 1;
+
         uint64_t iv = 0;
-        if (des->cbc) {
+        uint64_t counter = 0;
+        if (des->mode_type != DES_MODE_ECB) {
             if (parse_hex_key(des->vector, &iv))
                 return fprintf(stderr, "ft_ssl: des: invalid initialization vector\n"), 1;
+            counter = iv;
         }
+
         for (size_t index = 0; index < len; index += DES_BLOCK_SIZE) {
             uint64_t cipher_block = bytes_to_u64(data + index);
-            uint64_t decrypted = des_block(cipher_block, subkeys, true);
-            uint64_t out_block = decrypted;
-            if (des->cbc)
-                out_block ^= iv;
+            uint64_t out_block = 0;
+            switch (des->mode_type) {
+                case DES_MODE_ECB: {
+                    uint64_t decrypted = des_block(cipher_block, subkeys, true);
+                    out_block = decrypted;
+                    break;
+                }
+                case DES_MODE_CBC: {
+                    uint64_t decrypted = des_block(cipher_block, subkeys, true);
+                    out_block = decrypted ^ iv;
+                    iv = cipher_block;
+                    break;
+                }
+                case DES_MODE_CFB: {
+                    uint64_t ks = des_block(iv, subkeys, false);
+                    out_block = cipher_block ^ ks;
+                    iv = cipher_block;
+                    break;
+                }
+                case DES_MODE_OFB: {
+                    uint64_t ks = des_block(iv, subkeys, false);
+                    out_block = cipher_block ^ ks;
+                    iv = ks;
+                    break;
+                }
+                case DES_MODE_CTR: {
+                    uint64_t ks = des_block(counter, subkeys, false);
+                    out_block = cipher_block ^ ks;
+                    counter++;
+                    break;
+                }
+            }
             u64_to_bytes(out_block, output + index);
-            if (des->cbc)
-                iv = cipher_block;
         }
         if (des->key_generated) {
             output_len = len;
@@ -602,6 +667,18 @@ int cmd_des(t_args* args)
 {
     t_des_cmd des;
     initialize_des(&des);
+    if (args && args->command) {
+        if (!ft_strcmp(args->command, "des-cbc"))
+            des.mode_type = DES_MODE_CBC;
+        else if (!ft_strcmp(args->command, "des-cfb"))
+            des.mode_type = DES_MODE_CFB;
+        else if (!ft_strcmp(args->command, "des-ofb"))
+            des.mode_type = DES_MODE_OFB;
+        else if (!ft_strcmp(args->command, "des-ctr"))
+            des.mode_type = DES_MODE_CTR;
+        else
+            des.mode_type = DES_MODE_ECB;
+    }
     if (parse_des_args(args, &des))
         return 1;
     if (validate_des_args(&des))
